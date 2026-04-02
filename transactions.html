@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Transactions — FinanceTrack</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg:#0a0f1e;--surface:#111827;--card:#151f35;--card2:#1a2540;
+    --border:rgba(255,255,255,0.07);--accent:#4f8ef7;--accent2:#7c5cfc;
+    --accent3:#f7c948;--accent4:#3ecfa3;--danger:#f76b6b;
+    --text:#e8eaf6;--muted:#7a8aaa;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden;}
+  body::before{content:'';position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse 60% 40% at 10% 20%,rgba(79,142,247,0.08) 0%,transparent 60%),radial-gradient(ellipse 50% 50% at 90% 80%,rgba(124,92,252,0.07) 0%,transparent 60%);pointer-events:none;}
+
+  .sidebar{position:fixed;left:0;top:0;bottom:0;width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:28px 0;z-index:100;}
+  .logo{padding:0 24px 28px;border-bottom:1px solid var(--border);margin-bottom:24px;}
+  .logo-icon{width:38px;height:38px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:10px;box-shadow:0 4px 16px rgba(79,142,247,0.3);}
+  .logo h2{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;}
+  .logo p{font-size:11px;color:var(--muted);margin-top:2px;}
+  .nav-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;padding:0 24px 8px;}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:11px 24px;color:var(--muted);text-decoration:none;font-size:13.5px;font-weight:500;transition:all 0.2s;border-left:3px solid transparent;cursor:pointer;}
+  .nav-item:hover{color:var(--text);background:rgba(255,255,255,0.04);}
+  .nav-item.active{color:var(--accent);border-left-color:var(--accent);background:rgba(79,142,247,0.08);}
+  .nav-item .icon{font-size:16px;width:20px;text-align:center;}
+  .sidebar-footer{margin-top:auto;padding:20px 24px 0;border-top:1px solid var(--border);}
+  .month-badge{background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:8px;padding:10px 14px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;text-align:center;}
+  .month-badge span{display:block;font-size:10px;font-weight:400;opacity:0.7;margin-bottom:2px;}
+
+  .main{margin-left:220px;padding:30px 32px;position:relative;z-index:1;animation:fadeUp 0.6s ease;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+  .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;}
+  .topbar h1{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;}
+  .topbar h1 span{color:var(--accent);}
+  .topbar-right{display:flex;align-items:center;gap:12px;}
+
+  .search-box{background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:9px 14px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;width:220px;transition:border-color 0.2s;}
+  .search-box:focus{border-color:var(--accent);}
+  .search-box::placeholder{color:var(--muted);}
+
+  .filter-select{background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:9px 14px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;outline:none;}
+
+  .btn-add{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:8px;padding:9px 18px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;box-shadow:0 4px 14px rgba(79,142,247,0.3);display:inline-flex;align-items:center;gap:6px;}
+  .btn-add:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(79,142,247,0.4);}
+
+  /* SUMMARY STRIP */
+  .summary-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+  .strip-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 20px;display:flex;align-items:center;gap:14px;animation:fadeUp 0.5s ease both;}
+  .strip-card:nth-child(1){animation-delay:0.1s;}
+  .strip-card:nth-child(2){animation-delay:0.2s;}
+  .strip-card:nth-child(3){animation-delay:0.3s;}
+  .strip-card:nth-child(4){animation-delay:0.4s;}
+  .strip-icon{font-size:22px;width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;}
+  .strip-info .lbl{font-size:11px;color:var(--muted);margin-bottom:3px;}
+  .strip-info .val{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;}
+
+  /* TABLE CARD */
+  .table-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;animation:fadeUp 0.6s ease 0.3s both;}
+  .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+  .card-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;}
+  .card-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+  .card-badge{font-size:10px;padding:4px 10px;border-radius:20px;background:rgba(79,142,247,0.12);color:var(--accent);font-weight:500;}
+
+  .table-wrap{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;}
+  th{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;padding:0 14px 14px;text-align:left;border-bottom:1px solid var(--border);}
+  td{padding:14px;font-size:13px;border-bottom:1px solid rgba(255,255,255,0.03);}
+  tr:hover td{background:rgba(255,255,255,0.02);}
+  tr:last-child td{border-bottom:none;}
+  tr{animation:fadeUp 0.4s ease both;}
+
+  .cat-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;}
+  .pill-food{background:rgba(247,201,72,0.12);color:var(--accent3);}
+  .pill-transport{background:rgba(79,142,247,0.12);color:var(--accent);}
+  .pill-bills{background:rgba(124,92,252,0.12);color:var(--accent2);}
+  .pill-shopping{background:rgba(62,207,163,0.12);color:var(--accent4);}
+  .pill-other{background:rgba(255,255,255,0.06);color:var(--muted);}
+  .pill-salary{background:rgba(62,207,163,0.12);color:var(--accent4);}
+  .pill-entertainment{background:rgba(247,107,107,0.12);color:var(--danger);}
+  .pill-health{background:rgba(247,201,72,0.12);color:var(--accent3);}
+
+  .type-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;}
+  .type-income{background:rgba(62,207,163,0.1);color:var(--accent4);}
+  .type-expense{background:rgba(247,107,107,0.1);color:var(--danger);}
+
+  .amount-pos{color:var(--accent4);font-family:'Syne',sans-serif;font-weight:600;}
+  .amount-neg{color:var(--danger);font-family:'Syne',sans-serif;font-weight:600;}
+
+  .btn-delete{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:4px 8px;border-radius:6px;transition:all 0.2s;}
+  .btn-delete:hover{background:rgba(247,107,107,0.1);color:var(--danger);}
+
+  .empty-state{text-align:center;padding:60px;color:var(--muted);font-size:13px;}
+  .empty-state .emoji{font-size:40px;margin-bottom:12px;}
+
+  /* PAGINATION */
+  .pagination{display:flex;align-items:center;justify-content:space-between;margin-top:20px;padding-top:16px;border-top:1px solid var(--border);}
+  .page-info{font-size:12px;color:var(--muted);}
+  .page-btns{display:flex;gap:8px;}
+  .page-btn{background:var(--card2);border:1px solid var(--border);color:var(--muted);border-radius:7px;padding:7px 14px;font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;transition:all 0.2s;}
+  .page-btn:hover{border-color:var(--accent);color:var(--accent);}
+  .page-btn.active{background:rgba(79,142,247,0.15);border-color:var(--accent);color:var(--accent);}
+  .page-btn:disabled{opacity:0.3;cursor:not-allowed;}
+
+  /* MODAL */
+  .modal-overlay{position:fixed;inset:0;z-index:999;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+  .modal-overlay.open{display:flex;}
+  .modal{background:var(--card2);border:1px solid var(--border);border-radius:20px;padding:28px;width:420px;animation:fadeUp 0.3s ease;}
+  .modal h3{font-family:'Syne',sans-serif;font-size:18px;margin-bottom:20px;}
+  .form-group{margin-bottom:14px;}
+  .form-group label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px;}
+  .form-group input,.form-group select{width:100%;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border-color 0.2s;}
+  .form-group input:focus,.form-group select:focus{border-color:var(--accent);}
+  .type-toggle{display:flex;gap:10px;}
+  .type-btn{flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:all 0.2s;}
+  .type-btn.active-income{border-color:var(--accent4);color:var(--accent4);background:rgba(62,207,163,0.08);}
+  .type-btn.active-expense{border-color:var(--danger);color:var(--danger);background:rgba(247,107,107,0.08);}
+  .modal-btns{display:flex;gap:10px;margin-top:20px;}
+  .btn-cancel{flex:1;padding:11px;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;font-family:'DM Sans',sans-serif;cursor:pointer;}
+  .btn-save{flex:2;padding:11px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:#fff;border-radius:8px;font-family:'DM Sans',sans-serif;font-weight:500;cursor:pointer;}
+
+  ::-webkit-scrollbar{width:5px;height:5px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:3px;}
+</style>
+</head>
+<body>
+<nav class="sidebar">
+  <div class="logo">
+    <div class="logo-icon">💰</div>
+    <h2>FinanceTrack</h2>
+    <p>Personal Budget Manager</p>
+  </div>
+  <div class="nav-label">Menu</div>
+  <a class="nav-item" href="index.html"><span class="icon">📊</span> Dashboard</a>
+  <a class="nav-item" href="monthly.html"><span class="icon">📅</span> Monthly View</a>
+  <a class="nav-item active" href="transactions.html"><span class="icon">💳</span> Transactions</a>
+  <a class="nav-item" href="analytics.html"><span class="icon">📈</span> Analytics</a>
+  <a class="nav-item" onclick="openModal()"><span class="icon">➕</span> Add Transaction</a>
+  <div class="sidebar-footer">
+    <div class="month-badge"><span>Current Period</span><span id="month-badge">—</span></div>
+  </div>
+</nav>
+
+<main class="main">
+  <div class="topbar">
+    <div>
+      <h1>All <span>Transactions</span></h1>
+      <p style="font-size:12px;color:var(--muted);margin-top:3px;">View, search and manage all your records</p>
+    </div>
+    <div class="topbar-right">
+      <input class="search-box" type="text" placeholder="🔍 Search transactions..." id="search-input" oninput="renderTable()"/>
+      <select class="filter-select" id="type-filter" onchange="renderTable()">
+        <option value="all">All Types</option>
+        <option value="income">Income Only</option>
+        <option value="expense">Expense Only</option>
+      </select>
+      <select class="filter-select" id="cat-filter" onchange="renderTable()">
+        <option value="all">All Categories</option>
+        <option value="Food">Food</option>
+        <option value="Transport">Transport</option>
+        <option value="Bills">Bills</option>
+        <option value="Shopping">Shopping</option>
+        <option value="Salary">Salary</option>
+        <option value="Entertainment">Entertainment</option>
+        <option value="Health">Health</option>
+        <option value="Other">Other</option>
+      </select>
+      <button class="btn-add" onclick="openModal()">＋ Add</button>
+    </div>
+  </div>
+
+  <div class="summary-strip">
+    <div class="strip-card">
+      <div class="strip-icon" style="background:rgba(62,207,163,0.12);">💵</div>
+      <div class="strip-info"><div class="lbl">Total Income</div><div class="val" id="s-income" style="color:var(--accent4)">₹0</div></div>
+    </div>
+    <div class="strip-card">
+      <div class="strip-icon" style="background:rgba(247,107,107,0.12);">💸</div>
+      <div class="strip-info"><div class="lbl">Total Expenses</div><div class="val" id="s-expense" style="color:var(--danger)">₹0</div></div>
+    </div>
+    <div class="strip-card">
+      <div class="strip-icon" style="background:rgba(79,142,247,0.12);">🏦</div>
+      <div class="strip-info"><div class="lbl">Net Balance</div><div class="val" id="s-balance" style="color:var(--accent)">₹0</div></div>
+    </div>
+    <div class="strip-card">
+      <div class="strip-icon" style="background:rgba(247,201,72,0.12);">🧾</div>
+      <div class="strip-info"><div class="lbl">Total Records</div><div class="val" id="s-count" style="color:var(--accent3)">0</div></div>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <div class="card-header">
+      <div><div class="card-title">Transaction History</div><div class="card-sub">All your financial records</div></div>
+      <span class="card-badge" id="showing-badge">0 records</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th><th>Description</th><th>Category</th><th>Type</th><th>Date</th><th>Amount</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="txn-body"></tbody>
+      </table>
+    </div>
+    <div class="pagination">
+      <div class="page-info" id="page-info">Showing 0 of 0</div>
+      <div class="page-btns">
+        <button class="page-btn" id="btn-prev" onclick="changePage(-1)" disabled>← Prev</button>
+        <div id="page-numbers" style="display:flex;gap:6px;"></div>
+        <button class="page-btn" id="btn-next" onclick="changePage(1)" disabled>Next →</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <h3>➕ Add Transaction</h3>
+    <div class="form-group"><label>Type</label>
+      <div class="type-toggle">
+        <button class="type-btn active-income" id="btn-income" onclick="setType('income')">💵 Income</button>
+        <button class="type-btn" id="btn-expense" onclick="setType('expense')">💸 Expense</button>
+      </div>
+    </div>
+    <div class="form-group"><label>Amount (₹)</label><input type="number" id="inp-amount" placeholder="e.g. 5000" min="0"/></div>
+    <div class="form-group"><label>Category</label>
+      <select id="inp-category">
+        <option value="Food">🍔 Food</option><option value="Transport">🚗 Transport</option>
+        <option value="Bills">🧾 Bills</option><option value="Shopping">🛍️ Shopping</option>
+        <option value="Salary">💼 Salary</option><option value="Entertainment">🎬 Entertainment</option>
+        <option value="Health">🏥 Health</option><option value="Other">📦 Other</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Description</label><input type="text" id="inp-desc" placeholder="e.g. Grocery shopping"/></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="saveTransaction()">Save Transaction</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'http://127.0.0.1:5000/api';
+let allTxns = [], filtered = [], currentPage = 1;
+const PER_PAGE = 15;
+let currentType = 'income';
+
+const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+document.getElementById('month-badge').textContent = months[new Date().getMonth()] + ' ' + new Date().getFullYear();
+
+function fmt(n){return '₹'+Number(n).toLocaleString('en-IN',{maximumFractionDigits:0});}
+function getCatPill(cat){
+  const map={Food:'pill-food',Transport:'pill-transport',Bills:'pill-bills',Shopping:'pill-shopping',Salary:'pill-salary',Entertainment:'pill-entertainment',Health:'pill-health',Other:'pill-other'};
+  return map[cat]||'pill-other';
+}
+function setType(t){
+  currentType=t;
+  document.getElementById('btn-income').className='type-btn'+(t==='income'?' active-income':'');
+  document.getElementById('btn-expense').className='type-btn'+(t==='expense'?' active-expense':'');
+}
+function openModal(){document.getElementById('modal-overlay').classList.add('open');}
+function closeModal(){document.getElementById('modal-overlay').classList.remove('open');document.getElementById('inp-amount').value='';document.getElementById('inp-desc').value='';}
+
+async function saveTransaction(){
+  const amount=parseFloat(document.getElementById('inp-amount').value);
+  const category=document.getElementById('inp-category').value;
+  const description=document.getElementById('inp-desc').value;
+  if(!amount||amount<=0){alert('Please enter a valid amount');return;}
+  await fetch(`${API}/transactions/`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:currentType,amount,category,description})});
+  closeModal();loadData();
+}
+async function deleteTransaction(id){
+  if(!confirm('Delete this transaction?'))return;
+  await fetch(`${API}/transactions/${id}`,{method:'DELETE'});loadData();
+}
+
+function renderTable(){
+  const search=document.getElementById('search-input').value.toLowerCase();
+  const typeF=document.getElementById('type-filter').value;
+  const catF=document.getElementById('cat-filter').value;
+  filtered=allTxns.filter(t=>{
+    const matchSearch=!search||(t.description||'').toLowerCase().includes(search)||t.category.toLowerCase().includes(search);
+    const matchType=typeF==='all'||t.type===typeF;
+    const matchCat=catF==='all'||t.category===catF;
+    return matchSearch&&matchType&&matchCat;
+  });
+  const income=filtered.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const expense=filtered.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  document.getElementById('s-income').textContent=fmt(income);
+  document.getElementById('s-expense').textContent=fmt(expense);
+  document.getElementById('s-balance').textContent=fmt(income-expense);
+  document.getElementById('s-count').textContent=filtered.length;
+  document.getElementById('showing-badge').textContent=filtered.length+' records';
+  currentPage=1;renderPage();
+}
+
+function renderPage(){
+  const start=(currentPage-1)*PER_PAGE;
+  const pageData=filtered.slice(start,start+PER_PAGE);
+  const tbody=document.getElementById('txn-body');
+  if(filtered.length===0){
+    tbody.innerHTML='<tr><td colspan="7"><div class="empty-state"><div class="emoji">📭</div>No transactions found</div></td></tr>';
+  } else {
+    tbody.innerHTML=pageData.map((t,i)=>`
+      <tr style="animation-delay:${i*0.03}s">
+        <td style="color:var(--muted);font-size:11px;">${start+i+1}</td>
+        <td>${t.description||'—'}</td>
+        <td><span class="cat-pill ${getCatPill(t.category)}">${t.category}</span></td>
+        <td><span class="type-badge ${t.type==='income'?'type-income':'type-expense'}">${t.type==='income'?'↑':'↓'} ${t.type}</span></td>
+        <td style="color:var(--muted);font-size:12px;">${new Date(t.date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}</td>
+        <td class="${t.type==='income'?'amount-pos':'amount-neg'}">${t.type==='income'?'+':'-'}${fmt(t.amount)}</td>
+        <td><button class="btn-delete" onclick="deleteTransaction(${t.id})" title="Delete">🗑️</button></td>
+      </tr>`).join('');
+  }
+  const totalPages=Math.ceil(filtered.length/PER_PAGE);
+  document.getElementById('page-info').textContent=`Showing ${Math.min(start+1,filtered.length)}–${Math.min(start+PER_PAGE,filtered.length)} of ${filtered.length}`;
+  document.getElementById('btn-prev').disabled=currentPage<=1;
+  document.getElementById('btn-next').disabled=currentPage>=totalPages;
+  const nums=document.getElementById('page-numbers');
+  nums.innerHTML='';
+  for(let p=1;p<=totalPages;p++){
+    const b=document.createElement('button');
+    b.className='page-btn'+(p===currentPage?' active':'');
+    b.textContent=p;b.onclick=()=>{currentPage=p;renderPage();};
+    nums.appendChild(b);
+  }
+}
+function changePage(dir){currentPage+=dir;renderPage();}
+
+async function loadData(){
+  const res=await fetch(`${API}/transactions/`);
+  allTxns=await res.json();
+  renderTable();
+}
+loadData();
+</script>
+</body>
+</html>
