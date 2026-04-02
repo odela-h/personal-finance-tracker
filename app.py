@@ -16,7 +16,8 @@ from routes.analytics import analytics_bp
 app.register_blueprint(transactions_bp, url_prefix="/api/transactions")
 app.register_blueprint(analytics_bp, url_prefix="/api/analytics")
 
+with app.app_context():
+    db.create_all()
+
 if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()
     app.run(debug=True)
